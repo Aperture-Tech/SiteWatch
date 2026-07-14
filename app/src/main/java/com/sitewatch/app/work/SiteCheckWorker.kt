@@ -12,6 +12,7 @@ import com.sitewatch.app.monitor.SnapshotResult
 import com.sitewatch.app.notification.NotificationHelper
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.delay
 
 /**
  * Periodically captures a snapshot of one site and, if it differs from the
@@ -55,22 +56,45 @@ class SiteCheckWorker @AssistedInject constructor(
 
             is SnapshotResult.Success -> {
                 val previous = site.lastSnapshot
-                val changed = previous != null && previous != result.hash
+                val suspectedChange = previous != null && previous != result.hash
 
-                repository.recordCheck(
-                    id = site.id,
-                    checkedAt = now,
-                    snapshot = result.hash,
-                    content = result.content,
-                    changedAt = if (changed) now else site.lastChangedAt,
-                    error = null,
-                )
+                if (!suspectedChange) {
+                    // First baseline or genuinely unchanged — just record it.
+                    repository.recordCheck(
+                        id = site.id,
+                        checkedAt = now,
+                        snapshot = result.hash,
+                        content = result.content,
+                        changedAt = site.lastChangedAt,
+                        error = null,
+                    )
+                    return Result.success()
+                }
 
-                if (changed) {
+                // A change is suspected. Sites that show a loading/splash screen
+                // before their real content can momentarily hash differently, so
+                // confirm with a second reading before alerting: only a stable
+                // result that still differs from the baseline counts as real.
+                delay(CONFIRM_DELAY_MS)
+                val confirm = monitor.snapshot(site)
+
+                if (confirm is SnapshotResult.Success &&
+                    confirm.hash == result.hash &&
+                    confirm.hash != previous
+                ) {
+                    // Confirmed, stable change.
                     val message = ChangeDescriber.describe(
                         type = site.monitorType,
                         old = site.lastContent.orEmpty(),
-                        new = result.content,
+                        new = confirm.content,
+                    )
+                    repository.recordCheck(
+                        id = site.id,
+                        checkedAt = now,
+                        snapshot = confirm.hash,
+                        content = confirm.content,
+                        changedAt = now,
+                        error = null,
                     )
                     notificationHelper.notifySiteChanged(site.id, site.label, message)
                     repository.addNotification(
@@ -82,6 +106,18 @@ class SiteCheckWorker @AssistedInject constructor(
                             createdAt = now,
                         )
                     )
+                } else {
+                    // Unconfirmed — most likely a transient loading state. Keep the
+                    // existing baseline so we neither alert on it nor lock in the
+                    // transient value; the next run re-compares against the baseline.
+                    repository.recordCheck(
+                        id = site.id,
+                        checkedAt = now,
+                        snapshot = previous,
+                        content = site.lastContent,
+                        changedAt = site.lastChangedAt,
+                        error = null,
+                    )
                 }
                 return Result.success()
             }
@@ -90,5 +126,8 @@ class SiteCheckWorker @AssistedInject constructor(
 
     companion object {
         const val KEY_SITE_ID = "site_id"
+
+        /** Delay before re-reading to confirm a suspected change (filters loading screens). */
+        private const val CONFIRM_DELAY_MS = 4_000L
     }
 }
