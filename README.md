@@ -175,5 +175,12 @@ Bump `versionCode` (and `versionName`) in `app/build.gradle.kts` for each upload
   first launch.
 - A site's first check only stores a baseline snapshot — notifications fire on
   the *next* check that differs.
+- **Change confirmation (false-positive guard):** when a check first differs from
+  the baseline, the worker waits `CONFIRM_DELAY_MS` (~4s) and re-reads. It only
+  alerts if the second read is *stable* and still different. This filters sites
+  that briefly show a loading/splash screen before their real content — the
+  transient state won't trigger a false alarm, and it isn't stored as the new
+  baseline. Visual monitoring also waits longer for the page to settle before
+  capturing (`VisualCapture.SETTLE_DELAY_MS`).
 - Persistence is not guaranteed across reinstalls (per spec); the Room DB uses
   `fallbackToDestructiveMigration()`.

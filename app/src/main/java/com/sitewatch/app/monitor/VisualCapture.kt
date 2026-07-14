@@ -126,7 +126,7 @@ class VisualCapture @Inject constructor(
     companion object {
         private const val VIEWPORT_WIDTH = 1080
         private const val VIEWPORT_HEIGHT = 1920
-        private const val SETTLE_DELAY_MS = 1500L
+        private const val SETTLE_DELAY_MS = 2500L
         private const val CAPTURE_TIMEOUT_MS = 30_000L
     }
 }
