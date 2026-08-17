@@ -1,8 +1,8 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base theme; the Compose UI applies its own Material3 theme on top.
-         This only needs to be a valid Material3 parent for the splash/window. -->
-    <style name="Theme.SiteWatch" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
-    </style>
+<resources>
+    <!-- Base window theme. Kept minimal on purpose: the Compose UI applies its
+         own Material 3 theme, and enableEdgeToEdge() manages the system bars and
+         cutout handling across API levels. Setting android:statusBarColor /
+         windowLayoutInDisplayCutoutMode here is deprecated on Android 15+, so
+         those are intentionally omitted. -->
+    <style name="Theme.SiteWatch" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
