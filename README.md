@@ -184,3 +184,10 @@ Bump `versionCode` (and `versionName`) in `app/build.gradle.kts` for each upload
   capturing (`VisualCapture.SETTLE_DELAY_MS`).
 - Persistence is not guaranteed across reinstalls (per spec); the Room DB uses
   `fallbackToDestructiveMigration()`.
+- **Background reliability:** periodic checks run via WorkManager, which stock
+  Android throttles under Doze and OEMs (Samsung/Xiaomi/etc.) may kill entirely.
+  The dashboard shows a banner (`BackgroundReliabilityBanner`) when the app isn't
+  exempt from battery optimization or lacks notification permission, linking to
+  the relevant system settings. We deliberately avoid the sensitive
+  `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` permission and send users to Settings
+  instead. For guaranteed timing, a foreground service would be required.
