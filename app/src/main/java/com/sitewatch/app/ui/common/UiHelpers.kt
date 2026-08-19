@@ -2,7 +2,7 @@ package com.sitewatch.app.ui.common
 
 import android.text.format.DateUtils
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.TextFields
@@ -28,7 +28,7 @@ fun absoluteTime(epochMillis: Long?): String {
 }
 
 fun monitorIcon(type: MonitorType): ImageVector = when (type) {
-    MonitorType.FULL_PAGE -> Icons.Default.Article
+    MonitorType.FULL_PAGE -> Icons.AutoMirrored.Filled.Article
     MonitorType.TEXT -> Icons.Default.TextFields
     MonitorType.CSS_SELECTOR -> Icons.Default.Code
     MonitorType.VISUAL -> Icons.Default.Image
